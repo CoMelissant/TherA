@@ -31,12 +31,47 @@ from ..llava_arch import LlavaMetaModel, LlavaMetaForCausalLM
 class LlavaConfig(LlamaConfig):
     model_type = "llava_llama"
 
+    def __init__(self, **kwargs):
+        # Handle nested text_config (newer transformers multimodal config format)
+        text_config = kwargs.pop("text_config", None)
+        if isinstance(text_config, dict):
+            for k, v in text_config.items():
+                if k not in kwargs:
+                    kwargs[k] = v
+        super().__init__(**kwargs)
+        # Ensure critical attrs are in __dict__ for direct access.
+        # Newer transformers (with heterogeneity integration) may store
+        # attributes via internal mechanisms invisible to object.__getattribute__.
+        self._sync_attrs(kwargs)
+
+    def _sync_attrs(self, kwargs):
+        d = self.__dict__
+        # Try to_dict() as backup source (captures attributes stored by parent)
+        source = dict(kwargs)
+        try:
+            td = {k: v for k, v in self.to_dict().items() if not k.startswith('_')}
+            for k, v in td.items():
+                if k not in source:
+                    source[k] = v
+        except Exception:
+            pass
+        for key in ('hidden_size', 'vocab_size', 'intermediate_size',
+                    'num_attention_heads', 'num_hidden_layers',
+                    'num_key_value_heads', 'pretraining_tp', 'rms_norm_eps',
+                    'max_position_embeddings', 'torch_dtype'):
+            if key not in d or d[key] is None:
+                if key in source:
+                    d[key] = source[key]
+        if d.get('pretraining_tp') is None:
+            d['pretraining_tp'] = 1
+        if d.get('rms_norm_eps') is None:
+            d['rms_norm_eps'] = 1e-5
+
 
 class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
     config_class = LlavaConfig
 
     def __init__(self, config: LlamaConfig):
-        #config = config.to_dict() if isinstance(config, AutoConfig.PretrainedConfig) else config
         super(LlavaLlamaModel, self).__init__(config)
 
 
@@ -44,12 +79,11 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
     config_class = LlavaConfig
 
     def __init__(self, config):
-        #config = config.to_dict() if isinstance(config, PretrainedConfig) else config
         super(LlamaForCausalLM, self).__init__(config)
         self.model = LlavaLlamaModel(config)
-        self.pretraining_tp = config.pretraining_tp
-        self.vocab_size = config.vocab_size
-        self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
+        self.pretraining_tp = config.__dict__.get('pretraining_tp', 1)
+        self.vocab_size = config.__dict__.get('vocab_size', config.vocab_size if hasattr(config, 'vocab_size') else 32000)
+        self.lm_head = nn.Linear(config.__dict__['hidden_size'], self.vocab_size, bias=False)
 
         # Initialize weights and apply final processing
         self.post_init()

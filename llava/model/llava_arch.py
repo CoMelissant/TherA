@@ -26,6 +26,17 @@ from llava.constants import IGNORE_INDEX, IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_PATCH
 from llava.mm_utils import get_anyres_image_grid_shape
 
 
+def _cfg(config, key, default=None):
+    """Safe config access that bypasses __getattribute__ chain."""
+    d = config.__dict__
+    if key in d and d[key] is not None:
+        return d[key]
+    try:
+        return config.to_dict().get(key, default)
+    except Exception:
+        return default
+
+
 class LlavaMetaModel:
 
     def __init__(self, config):
@@ -37,7 +48,7 @@ class LlavaMetaModel:
 
             if 'unpad' in getattr(config, 'mm_patch_merge_type', ''):
                 self.image_newline = nn.Parameter(
-                    torch.empty(config.hidden_size, dtype=self.dtype)
+                    torch.empty(config.__dict__['hidden_size'], dtype=self.dtype)
                 )
 
     def get_vision_tower(self):
@@ -80,9 +91,10 @@ class LlavaMetaModel:
             self.mm_projector = build_vision_projector(self.config)
 
             if 'unpad' in mm_patch_merge_type:
-                embed_std = 1 / torch.sqrt(torch.tensor(self.config.hidden_size, dtype=self.dtype))
+                _hs = _cfg(self.config, 'hidden_size')
+                embed_std = 1 / torch.sqrt(torch.tensor(_hs, dtype=self.dtype))
                 self.image_newline = nn.Parameter(
-                    torch.randn(self.config.hidden_size, dtype=self.dtype) * embed_std
+                    torch.randn(_hs, dtype=self.dtype) * embed_std
                 )
         else:
             # In case it is frozen by LoRA

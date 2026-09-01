@@ -23,6 +23,40 @@ from llava.model import *
 from llava.constants import DEFAULT_IMAGE_PATCH_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
 
 
+def _fix_config(config):
+    """Ensure critical attributes are in config.__dict__ for direct access.
+    Works around newer transformers versions where PretrainedConfig stores
+    attributes via internal mechanisms (heterogeneity integration)."""
+    d = config.__dict__
+    source = {}
+    try:
+        td = {k: v for k, v in config.to_dict().items() if not k.startswith('_')}
+        source.update(td)
+    except Exception:
+        pass
+    # Also check text_config sub-dict
+    tc = d.get('text_config')
+    if isinstance(tc, dict):
+        for k, v in tc.items():
+            source.setdefault(k, v)
+    elif tc is not None and hasattr(tc, '__dict__'):
+        for k, v in tc.__dict__.items():
+            if not k.startswith('_'):
+                source.setdefault(k, v)
+    for key in ('hidden_size', 'vocab_size', 'intermediate_size',
+                'num_attention_heads', 'num_hidden_layers',
+                'num_key_value_heads', 'pretraining_tp', 'rms_norm_eps',
+                'max_position_embeddings', 'torch_dtype'):
+        if key not in d or d[key] is None:
+            if key in source:
+                d[key] = source[key]
+    if d.get('pretraining_tp') is None:
+        d['pretraining_tp'] = 1
+    if d.get('rms_norm_eps') is None:
+        d['rms_norm_eps'] = 1e-5
+    return config
+
+
 def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, load_4bit=False, device_map="auto", device="cuda", use_flash_attn=False, **kwargs):
     kwargs = {"device_map": device_map, **kwargs}
 
@@ -52,6 +86,7 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
         if 'lora' in model_name.lower() and model_base is not None:
             from llava.model.language_model.llava_llama import LlavaConfig
             lora_cfg_pretrained = LlavaConfig.from_pretrained(model_path)
+            _fix_config(lora_cfg_pretrained)
             tokenizer = AutoTokenizer.from_pretrained(model_base, use_fast=False)
             print('Loading LLaVA from base model...')
             model = LlavaLlamaForCausalLM.from_pretrained(model_base, low_cpu_mem_usage=True, config=lora_cfg_pretrained, **kwargs)
@@ -96,6 +131,7 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
             else:
                 tokenizer = AutoTokenizer.from_pretrained(model_base, use_fast=False)
                 cfg_pretrained = AutoConfig.from_pretrained(model_path)
+                _fix_config(cfg_pretrained)
                 model = LlavaLlamaForCausalLM.from_pretrained(model_base, low_cpu_mem_usage=True, config=cfg_pretrained, **kwargs)
 
             mm_projector_weights = torch.load(os.path.join(model_path, 'mm_projector.bin'), map_location='cpu')
@@ -115,7 +151,8 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
             else:
                 from transformers import AutoConfig
                 tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
-                config = AutoConfig.from_pretrained(model_path)  # returns PretrainedConfig
+                config = AutoConfig.from_pretrained(model_path)
+                _fix_config(config)
                 model = LlavaLlamaForCausalLM.from_pretrained(
                     model_path,
                     config=config,
