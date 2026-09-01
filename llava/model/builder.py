@@ -115,10 +115,9 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
             else:
                 from transformers import AutoConfig
                 tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
-                config = AutoConfig.from_pretrained(model_path)  # returns PretrainedConfig
+                #config = AutoConfig.from_pretrained(model_path)  # returns PretrainedConfig
                 model = LlavaLlamaForCausalLM.from_pretrained(
-                    model_path,
-                    config=config,
+                    model_path, #config=config,
                     low_cpu_mem_usage=True,
                     **kwargs
                 )
