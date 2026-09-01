@@ -26,7 +26,7 @@ from transformers.generation.utils import GenerateOutput
 
 from ..llava_arch import LlavaMetaModel, LlavaMetaForCausalLM
 
-from transformers.configuration_utils import PretrainedConfig
+#from transformers.configuration_utils import PretrainedConfig
 
 class LlavaConfig(LlamaConfig):
     model_type = "llava_llama"
@@ -35,16 +35,16 @@ class LlavaConfig(LlamaConfig):
 class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
     config_class = LlavaConfig
 
-    def __init__(self, tmpconfig: LlamaConfig):
-        config = tmpconfig.to_dict() if isinstance(tmpconfig, AutoConfig.PretrainedConfig) else tmpconfig
+    def __init__(self, config: LlamaConfig):
+        #config = config.to_dict() if isinstance(config, AutoConfig.PretrainedConfig) else config
         super(LlavaLlamaModel, self).__init__(config)
 
 
 class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
     config_class = LlavaConfig
 
-    def __init__(self, tmpconfig):
-        config = tmpconfig.to_dict() if isinstance(tmpconfig, PretrainedConfig) else tmpconfig
+    def __init__(self, config):
+        #config = config.to_dict() if isinstance(config, PretrainedConfig) else config
         super(LlamaForCausalLM, self).__init__(config)
         self.model = LlavaLlamaModel(config)
         self.pretraining_tp = config.pretraining_tp
