@@ -35,7 +35,8 @@ class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
     config_class = LlavaConfig
 
     def __init__(self, config: LlamaConfig):
-        super(LlavaLlamaModel, self).__init__(config)
+        tmpconfig = config.to_dict() if isinstance(config, AutoConfig.PretrainedConfig) else config
+        super(LlavaLlamaModel, self).__init__(tmpconfig)
 
 
 class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
