@@ -113,21 +113,35 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
                     **kwargs
                 )
             else:
-                from transformers import AutoProcessor, LlavaForConditionalGeneration
+                from transformers import AutoConfig, AutoProcessor
                 processor = AutoProcessor.from_pretrained(
                     "llava-hf/llava-1.5-7b-hf",
                     use_fast=False,
                     )
-                processor = AutoProcessor.from_pretrained(
-                    model_path, 
-                    use_fast=False,
-                    )
                 tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
-                model = LlavaForConditionalGeneration.from_pretrained(
-                    model_path,
+                #config = AutoConfig.from_pretrained(model_path)  # returns PretrainedConfig
+                model = LlavaLlamaForCausalLM.from_pretrained(
+                    model_path, #config=config,
                     low_cpu_mem_usage=True,
                     **kwargs
                 )
+
+
+                #                 from transformers import AutoProcessor, LlavaForConditionalGeneration
+                # processor = AutoProcessor.from_pretrained(
+                #     "llava-hf/llava-1.5-7b-hf",
+                #     use_fast=False,
+                #     )
+                # processor = AutoProcessor.from_pretrained(
+                #     model_path, 
+                #     use_fast=False,
+                #     )
+                # tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
+                # model = LlavaForConditionalGeneration.from_pretrained(
+                #     model_path,
+                #     low_cpu_mem_usage=True,
+                #     **kwargs
+                # )
     else:
         # Load language model
         if model_base is not None:
