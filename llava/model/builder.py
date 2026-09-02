@@ -125,8 +125,6 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
                 tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
                 model = LlavaForConditionalGeneration.from_pretrained(
                     model_path,
-                    torch_dtype="auto",
-                    device_map="auto",
                     low_cpu_mem_usage=True,
                     **kwargs
                 )
