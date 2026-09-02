@@ -113,11 +113,20 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
                     **kwargs
                 )
             else:
-                from transformers import AutoConfig
+                from transformers import AutoProcessor, LlavaForConditionalGeneration
+                processor = AutoProcessor.from_pretrained(
+                    "llava-hf/llava-1.5-7b-hf",
+                    use_fast=False,
+                    )
+                processor = AutoProcessor.from_pretrained(
+                    model_path, 
+                    use_fast=False,
+                    )
                 tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
-                #config = AutoConfig.from_pretrained(model_path)  # returns PretrainedConfig
-                model = LlavaLlamaForCausalLM.from_pretrained(
-                    model_path, #config=config,
+                model = LlavaForConditionalGeneration.from_pretrained(
+                    model_path,
+                    torch_dtype="auto",
+                    device_map="auto",
                     low_cpu_mem_usage=True,
                     **kwargs
                 )
@@ -155,6 +164,14 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
         model.resize_token_embeddings(len(tokenizer))
 
         vision_tower = model.get_vision_tower()
+
+        print("vision_tower:", vision_tower)
+        print("type:", type(vision_tower))
+        print("has is_loaded:", hasattr(vision_tower, "is_loaded"))
+
+        if vision_tower is not None:
+            print("attributes:", [x for x in dir(vision_tower) if "load" in x.lower()])
+
         if not vision_tower.is_loaded:
             vision_tower.load_model(device_map=device_map)
         if device_map != 'auto':
