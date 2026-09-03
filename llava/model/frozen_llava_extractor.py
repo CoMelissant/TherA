@@ -213,12 +213,21 @@ class FrozenLLaVAExtractor(nn.Module):
         # Forward through LLaVA; use top-level model so it accepts `images`
         # hidden_states are from the base model (before lm_head)
         def _forward_with(images_tensor: torch.Tensor):
-            return self.model(
-                input_ids=input_ids,
-                images=images_tensor,
-                return_dict=True,
-                output_hidden_states=True
-            )
+
+            if self.model.config.model_type == "llava":
+                return self.model(
+                    input_ids=input_ids,
+                    pixel_values=images_tensor,
+                    return_dict=True,
+                    output_hidden_states=True,
+                )
+            else:
+                return self.model(
+                    input_ids=input_ids,
+                    images=images_tensor,
+                    return_dict=True,
+                    output_hidden_states=True
+                )
 
         try:
             images_fwd = image_tensors
