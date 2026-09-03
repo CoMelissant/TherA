@@ -34,7 +34,7 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
         load_in_8bit=True,
         llm_int8_threshold=0.0,                             #  INT8 GEMM problem.
         llm_int8_skip_modules=["vision_tower"],             # . GELU cannot operate on torch.int8 
-        llm_int8_skip_modules=["multi_modal_projector "],
+        llm_int8_skip_modules=["multi_modal_projector"],
     )
 
     elif load_4bit:
@@ -135,17 +135,16 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
                     processor = AutoProcessor.from_pretrained(
                         "llava-hf/llava-1.5-7b-hf",
                         use_fast=False,
-                        )
-                    vision_tower = model.vision_tower
-                    projector = model.multi_modal_projector
-                    language_model = model.language_model
-               
+                    )              
                     tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
                     model = LlavaForConditionalGeneration.from_pretrained(
                         model_path,
                         low_cpu_mem_usage=True,
                         **kwargs
                     )
+                    vision_tower = model.vision_tower
+                    # projector = model.multi_modal_projector
+                    # language_model = model.language_model
     else:
         # Load language model
         if model_base is not None:
