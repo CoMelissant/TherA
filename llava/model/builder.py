@@ -128,19 +128,17 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
                         **kwargs
                     )
                 else:
+                    from transformers import AutoProcessor, AutoModelForVision2Seq
 
-                    from transformers import AutoProcessor, LlavaForConditionalGeneration
+                    # path = "llava-hf/llava-1.5-7b-hf"
 
-                    processor = AutoProcessor.from_pretrained(
-                        "llava-hf/llava-1.5-7b-hf",
-                        use_fast=False,
-                    )              
-                    tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
-                    model = LlavaForConditionalGeneration.from_pretrained(
+                    processor = AutoProcessor.from_pretrained(model_path)
+                    model = AutoModelForVision2Seq.from_pretrained(
                         model_path,
                         low_cpu_mem_usage=True,
                         **kwargs
                     )
+                    tokenizer = processor.tokenizer
                     
     else:
         # Load language model
@@ -183,9 +181,15 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
             if not vision_tower.is_loaded:
                 vision_tower.load_model(device_map=device_map)
 
+            image_processor = vision_tower.image_processor
+
         elif hasattr(model, "vision_tower"):
             # llava
             vision_tower = model.vision_tower
+            tokenizer = processor.tokenizer
+            image_processor = processor.image_processor
+            context_len = getattr(model.config, "max_position_embeddings", 2048)
+
         else:
             raise AttributeError("Could not find vision tower")
 
@@ -196,7 +200,7 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
                 # Use the mapped single device string
                 target_device = list(device_map.values())[0]
             vision_tower.to(device=target_device, dtype=torch.float16)
-        image_processor = vision_tower.image_processor
+        
 
     if hasattr(model.config, "max_sequence_length"):
         context_len = model.config.max_sequence_length
