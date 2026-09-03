@@ -176,22 +176,19 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
         model.resize_token_embeddings(len(tokenizer))
 
         if hasattr(model, "get_vision_tower"):
+            # llava_llama
             vision_tower = model.get_vision_tower()
+
+            #if hasattr(vision_tower, "is_loaded"):
+            if not vision_tower.is_loaded:
+                vision_tower.load_model(device_map=device_map)
+
         elif hasattr(model, "vision_tower"):
+            # llava
             vision_tower = model.vision_tower
         else:
-            raise AttributeError("Model has no vision tower")
+            raise AttributeError("Could not find vision tower")
 
-
-        print("vision_tower:", vision_tower)
-        print("type:", type(vision_tower))
-        print("has is_loaded:", hasattr(vision_tower, "is_loaded"))
-
-        if vision_tower is not None:
-            print("attributes:", [x for x in dir(vision_tower) if "load" in x.lower()])
-
-        if not vision_tower.is_loaded:
-            vision_tower.load_model(device_map=device_map)
         if device_map != 'auto':
             # device_map can be a string like 'cuda:0' or a dict {"": 'cuda:0'}
             target_device = device_map
