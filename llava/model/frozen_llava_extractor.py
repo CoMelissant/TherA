@@ -157,7 +157,8 @@ class FrozenLLaVAExtractor(nn.Module):
         input_ids_list = []
         for prompt in prompts:
             # Add image token
-            if self.model.config.mm_use_im_start_end:
+            if getattr(self.model.config, "mm_use_im_start_end", False):
+
                 prompt = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + prompt
             else:
                 prompt = DEFAULT_IMAGE_TOKEN + '\n' + prompt
