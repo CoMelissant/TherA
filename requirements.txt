@@ -9,19 +9,19 @@ torchvision>=0.15.0
 # attention attrs (attention_dropout, rope_parameters, ...) break custom
 # LlavaConfig and the old flat llava-1.5-7b-hf config.json.
 # Pin the whole huggingface stack + diffusers to a consistent early-2024 set.
-transformers==4.36.2
-tokenizers>=0.14.1
-huggingface-hub==0.20.3
+transformers==4.37.2
+tokenizers==0.14.1
+huggingface-hub==0.25.2
 diffusers==0.25.1
 accelerate==0.25.0
-safetensors==0.4.1
-
+safetensors==0.8.0
+bitsandbytes==50.2
 # Image I/O
 pillow>=9.0.0
 tqdm>=4.65.0
 
 # LLaVA on-the-fly mode only (optional for reference-cache inference)
-peft==0.7.1
+peft==0.13.2
 sentencepiece>=0.1.99
 protobuf>=3.20.0
 

@@ -202,7 +202,7 @@ def load_models(args):
             llava_base_path=args.llava_base_path,
             llava_lora_path=args.llava_lora_path,
             device=args.device,
-            load_8bit=False,
+            load_8bit=True,
             load_4bit=False,
             merge_lora=True,
         )
