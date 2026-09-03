@@ -141,9 +141,7 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
                         low_cpu_mem_usage=True,
                         **kwargs
                     )
-                    vision_tower = model.vision_tower
-                    # projector = model.multi_modal_projector
-                    # language_model = model.language_model
+                    
     else:
         # Load language model
         if model_base is not None:
@@ -177,7 +175,13 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
             tokenizer.add_tokens([DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN], special_tokens=True)
         model.resize_token_embeddings(len(tokenizer))
 
-        vision_tower = model.get_vision_tower()
+        if hasattr(model, "get_vision_tower"):
+            vision_tower = model.get_vision_tower()
+        elif hasattr(model, "vision_tower"):
+            vision_tower = model.vision_tower
+        else:
+            raise AttributeError("Model has no vision tower")
+
 
         print("vision_tower:", vision_tower)
         print("type:", type(vision_tower))
