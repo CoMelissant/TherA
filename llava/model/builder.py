@@ -32,7 +32,8 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
     if load_8bit:
         kwargs['quantization_config'] = BitsAndBytesConfig(
         load_in_8bit=True,
-        llm_int8_threshold=0.0,
+        llm_int8_threshold=0.0,                 #  INT8 GEMM problem.
+        llm_int8_skip_modules=["mm_projector"], # . GELU cannot operate on torch.int8 
     )
 
     elif load_4bit:
