@@ -119,8 +119,8 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
                 )
             else:
 
-
-                if False:
+                model_type = detect_model_type(model_path)
+                if model_type == "original_llava":
                     tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
                     model = LlavaLlamaForCausalLM.from_pretrained(
                         model_path, #config=config,
@@ -128,9 +128,10 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
                         **kwargs
                     )
                 else:
+                    # hf_llava i.e. "llava-hf/llava-1.5-7b-hf"
                     from transformers import AutoProcessor, AutoModelForVision2Seq
 
-                    # path = "llava-hf/llava-1.5-7b-hf"
+                    
 
                     processor = AutoProcessor.from_pretrained(model_path)
                     model = AutoModelForVision2Seq.from_pretrained(
@@ -208,3 +209,29 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
         context_len = 2048
 
     return tokenizer, model, image_processor, context_len
+
+
+
+
+def detect_model_type(model_dir):
+    import json
+    from pathlib import Path
+
+    model_dir = Path(model_dir)
+
+    with open(model_dir / "config.json") as f:
+        c = json.load(f)
+
+    architectures = c.get("architectures", [])
+    model_type = c.get("model_type")
+
+    if "LlavaForConditionalGeneration" in architectures:
+        return "hf_llava"
+
+    if model_type == "llava":
+        return "llava"
+
+    if "LlavaLlamaForCausalLM" in architectures:
+        return "original_llava"
+
+    return "unknown"
