@@ -214,7 +214,7 @@ class FrozenLLaVAExtractor(nn.Module):
         # hidden_states are from the base model (before lm_head)
         def _forward_with(images_tensor: torch.Tensor):
 
-            if self.model.config.model_type == "llava":
+            if self.model.config.model_type == "hf_llava":
                 return self.model(
                     input_ids=input_ids,
                     pixel_values=images_tensor,
