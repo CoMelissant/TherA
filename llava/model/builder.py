@@ -118,9 +118,9 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
                     **kwargs
                 )
             else:
-
                 model_type = detect_model_type(model_path)
-                if model_type == "original_llava":
+                print("loading " + model_type )
+                if model_type in {"original_llava", "llava"}:
                     tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
                     model = LlavaLlamaForCausalLM.from_pretrained(
                         model_path, #config=config,
@@ -130,8 +130,6 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
                 else:
                     # hf_llava i.e. "llava-hf/llava-1.5-7b-hf"
                     from transformers import AutoProcessor, AutoModelForVision2Seq
-
-                    
 
                     processor = AutoProcessor.from_pretrained(model_path)
                     model = AutoModelForVision2Seq.from_pretrained(
